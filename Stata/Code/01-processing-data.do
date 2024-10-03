@@ -4,17 +4,18 @@
 *------------------------------------------------------------------------------- 	
 	
 	* Load TZA_CCT_baseline.dta
-	use "${data}/???", clear
+	use "C:\Users\wb488346\OneDrive - WBG\DataWork\DataWork\Data\Raw\TZA_CCT_baseline.dta", clear
 	
 *-------------------------------------------------------------------------------	
 * Checking for unique ID and fixing duplicates
 *------------------------------------------------------------------------------- 		
 
+
 	* Identify duplicates 
-	ieduplicates	??? ///
+	ieduplicates	hhid ///
 					using "${outputs}/duplicates.xlsx", ///
-					uniquevars(???) ///
-					keepvars(???) ///
+					uniquevars(key) ///
+					keepvars(vid enid submissionday) ///
 					nodaily
 					
 	
@@ -23,36 +24,41 @@
 *------------------------------------------------------------------------------- 							
 	
 	* IDs
-	local ids 		???	
+	local ids vid hhid enid	
 	
 	* Unit: household
-	local hh_vars 	???
+	local hh_vars floor - n_elder ///
+	              food_cons -submissionday
 	
 	* Unit: Household-memebr
-	local hh_mem	???
+	local hh_mem gender age read clinic_visit sick days_sick ///
+				 treat_fin treat_cost ill_impact days_impact
 	
-	
+
 	* define locals with suffix and for reshape
 	foreach mem in `hh_mem' {
 		
-		local mem_vars 		???
-		local reshape_mem	???
+		local mem_vars 	"`mem_vars' `mem'_*"
+		local reshape_mem "`reshape_mem' `mem'_"
 	}
 		
 	
 *-------------------------------------------------------------------------------	
 * Tidy Data: HH
 *-------------------------------------------------------------------------------	
-
-	preserve 
+	*preserve 
 		
 		* Keep HH vars
 		keep `ids' `hh_vars'
 		
 		* Check if data type is string
-				
+			ds, has(type string)	
 		
-		* Fix data types 
+		* Fix data types
+		gen submissiondate= date(submissionday, "YMD hms")
+		
+		*Encoding area farm unit (labelbook ar_unit)
+		encode ar_farm_unit, gen(ar_unit)
 		* numeric should be numeric
 		* dates should be in the date format
 		* Categorical should have value labels 
